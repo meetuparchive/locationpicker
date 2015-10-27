@@ -1,0 +1,13 @@
+{
+  "name": "MapTest",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node_modules/react-native/packager/packager.sh"
+  },
+  "dependencies": {
+    "react-native": "^0.13.2",
+    "react-native-geocoder": "^0.1.4",
+    "react-native-mapbox-gl": "^1.0.0"
+  }
+}
