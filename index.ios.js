@@ -42,25 +42,36 @@ var MapTest = React.createClass({
         latitude: 40.72052634,
         longitude: -73.97686958312988
       },
-      zoom: 11
+      zoom: 13,
+      startLeft: 0
     };
   },
   componentDidMount() {
-    
+    let _this = this;
+    navigator.geolocation.getCurrentPosition(
+      (initialPosition) => {
+        this.setCenterCoordinateAnimated(mapRef, initialPosition.coords.latitude, initialPosition.coords.longitude);
+        RNGeocoder.reverseGeocodeLocation({latitude: initialPosition.coords.latitude, longitude: initialPosition.coords.longitude}).then((data) => {
+          if (data[0]) {
+            let obj = data[0];
+            _this.setState({locationString: obj.locality + ", " + obj.administrativeArea});
+          }
+        });
+      }, (error) => alert(error.message),
+      {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000}
+    );
   },
   onRegionChange(location) {
     var _this = this;
     RNGeocoder.reverseGeocodeLocation({latitude: location.latitude, longitude: location.longitude}).then((data) => {
       if (data[0]) {
         let obj = data[0];
-        _this.setState({locationString: obj.subAdministrativeArea + ", " + obj.administrativeArea});
+        console.log(obj);
+        _this.setState({locationString: obj.locality + ", " + obj.administrativeArea});
       }
     });
   },
   onRegionWillChange(location) {
-    console.log(location);
-  },
-  onUpdateUserLocation(location) {
     console.log(location);
   },
   toggleSearchBox() {
@@ -90,22 +101,17 @@ var MapTest = React.createClass({
           rotateEnabled={true}
           scrollEnabled={true}
           zoomEnabled={true}
-          showsUserLocation={true}
+          showsUserLocation={false}
           ref={mapRef}
           accessToken={'pk.eyJ1Ijoibmlja3N0YW1hcyIsImEiOiI5MjE5OTQzNzExMDJiOTAyZmYyOGFmZWUxN2NjNGJjYSJ9.kA1isiQO5pquVtmLZ81rMw'}
           styleURL={'asset://styles/streets-v8.json'}
           centerCoordinate={this.state.center}
-          userLocationVisible={true}
+          userLocationVisible={false}
           zoomLevel={this.state.zoom}
           onRegionChange={this.onRegionChange}
           onRegionWillChange={this.onRegionWillChange}
           onOpenAnnotation={this.onOpenAnnotation}
-          onRightAnnotationTapped={this.onRightAnnotationTapped}
-          onUpdateUserLocation={this.onUpdateUserLocation} />
-        
-        <Image 
-          style={{backgroundColor: 'transparent', width: 93, height: 93, position: 'absolute', top: (SCREENH/2)-(93/2), left: (SCREENW/2)-(93/2)}}
-          source={require('image!locationCircle')}/>
+          onRightAnnotationTapped={this.onRightAnnotationTapped} />
         
         <Animated.View 
           style={{flex: 1, 
@@ -116,7 +122,7 @@ var MapTest = React.createClass({
                   shadowOffset: {width: 0, height: 3}, 
                   backgroundColor: 'rgba(255,255,255,0.98)', 
                   position: 'absolute', 
-                  top: _this.state.searchBox.interpolate({inputRange: [0,1], outputRange: [navHeight + margin, navHeight]}),
+                  top: _this.state.searchBox.interpolate({inputRange: [0,1], outputRange: [(SCREENH/2) - (searchBoxInitialHeight/2), navHeight]}),
                   left: _this.state.searchBox.interpolate({inputRange: [0,1], outputRange: [margin, 0]}),
                   right: _this.state.searchBox.interpolate({inputRange: [0,1], outputRange: [margin, 0]}),
                   height: _this.state.searchBox.interpolate({inputRange: [0,1], outputRange: [searchBoxInitialHeight, SCREENH - navHeight]})
@@ -156,9 +162,21 @@ var MapTest = React.createClass({
             </View>
           </TouchableOpacity>
         </Animated.View>
+
+        <Image 
+          style={{backgroundColor: 'transparent', width: 30, height: 18, position: 'absolute', top: (SCREENH/2)+(searchBoxInitialHeight/2), left: (SCREENW/2)-(30/2)}}
+          source={require('image!nip')}/>
         
         <View style={{flex: 1, backgroundColor: '#333', position: 'absolute', top: 0, left: 0, right: 0, height: 60, flexDirection: 'column', justifyContent: 'center'}}>
-          <Text style={{color: 'white', fontSize: 16, fontWeight: 'bold', textAlign: 'center'}}>Choose your location</Text>
+          <Text style={{color: 'white', fontSize: 16, textAlign: 'center'}}>Choose your location</Text>
+          <Text style={{position: 'absolute', top: 20, right: 0, color: 'white', fontSize: 16, fontWeight: 'bold', textAlign: 'right', paddingRight: 16}}>Done</Text>
+        </View>
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', position: 'absolute', top: 0, left: _this.state.startLeft, width: SCREENW, bottom: 0}}>
+          <TouchableOpacity onPress={() => {_this.setState({startLeft: -SCREENW})}}>
+            <View ref='start' style={{padding: 10, fontSize: 14, backgroundColor: 'blue'}}>
+              <Text style={{color: 'white'}}>Change your location</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
     );
